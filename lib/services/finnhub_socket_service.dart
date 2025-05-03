@@ -8,17 +8,46 @@ class FinnhubSocketService {
 
   FinnhubSocketService(this._symbol) {
     _channel = WebSocketChannel.connect(
-      Uri.parse('wss://ws.finnhub.io?token=$_apiKey'),
-    );
+  Uri.parse('wss://ws.finnhub.io?token=$_apiKey'),
+);
+
+final subMsg = jsonEncode({
+  'type': 'subscribe',
+  'symbol': _symbol,
+});
+
+print("Subscribing with message: $subMsg");
+_channel.sink.add(subMsg);
 
     _channel.sink.add(jsonEncode({
       'type': 'subscribe',
       'symbol': _symbol,
     }));
+    
   }
+  
+  bool useMockData = true; 
 
-  Stream<dynamic> get stream => _channel.stream;
+Stream<dynamic> get stream {
+  if (useMockData) {
+    return Stream.periodic(
+      const Duration(seconds: 1),
+      (i) => jsonEncode({
+        "data": [
+          {
+            "p": 150.0 + i,
+            "v": 100 + i,
+            "t": DateTime.now().millisecondsSinceEpoch
+          }
+        ]
+      }),
+    );
+  } else {
+    return _channel.stream.asBroadcastStream();
+  }
+}
 
+  
   void dispose() {
     _channel.sink.add(jsonEncode({
       'type': 'unsubscribe',
