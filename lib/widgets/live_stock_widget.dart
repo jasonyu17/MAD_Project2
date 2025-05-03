@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:project2/services/finnhub_socket_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:project2/services/favorites_service.dart';
 
 class LiveStockWidget extends StatefulWidget {
   final String symbol;
@@ -15,6 +15,7 @@ class LiveStockWidget extends StatefulWidget {
 class _LiveStockWidgetState extends State<LiveStockWidget> {
   Map<String, dynamic>? _quote;
   bool _isLoading = true;
+  Set<String> _favoritedSymbols = {};
   String? _error;
 
   Future<void> fetchQuote() async {
@@ -44,10 +45,35 @@ class _LiveStockWidgetState extends State<LiveStockWidget> {
     }
   }
 
+  Future<void> _loadFavorites() async {
+    final symbols = await FavoritesService.getFavorites();
+    setState(() {
+      _favoritedSymbols = symbols;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    final stockData = {
+      'symbol': widget.symbol,
+      'description': widget.symbol,
+      'type': 'Stock',
+    };
+
+    await FavoritesService.toggleFavorite(stockData, _favoritedSymbols);
+    setState(() {
+      if (_favoritedSymbols.contains(widget.symbol)) {
+        _favoritedSymbols.remove(widget.symbol);
+      } else {
+        _favoritedSymbols.add(widget.symbol);
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     fetchQuote();
+    _loadFavorites();
   }
 
   @override
@@ -56,10 +82,18 @@ class _LiveStockWidgetState extends State<LiveStockWidget> {
     if (_error != null) return Text(_error!);
     if (_quote == null) return const Text("No data");
 
+    final isFavorited = _favoritedSymbols.contains(widget.symbol);
+
     return ListTile(
       title: Text('${widget.symbol} @ \$${_quote!['c']}'),
       subtitle: Text('Previous Close: \$${_quote!['pc']}'),
-      trailing: Text('Vol: N/A'),
+      trailing: IconButton(
+        icon: Icon(
+          isFavorited ? Icons.favorite : Icons.favorite_border,
+          color: isFavorited ? Colors.red : null,
+        ),
+        onPressed: _toggleFavorite,
+      ),
     );
   }
 }

@@ -67,7 +67,7 @@ class _SearchPageState extends State<SearchPage> {
       _favoritedSymbols.add(symbol);
     }
   });
-}
+  }
 
 
   @override
@@ -86,7 +86,7 @@ class _SearchPageState extends State<SearchPage> {
           child: TextField(
             controller: _controller,
             decoration: InputDecoration(
-              hintText: "Search stock (e.g. Apple, AAPL)",
+              hintText: "Search stock",
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
@@ -110,7 +110,7 @@ class _SearchPageState extends State<SearchPage> {
                             trailing: IconButton(
                               icon: Icon(
                                 isFavorited ? Icons.favorite : Icons.favorite_border,
-                                color: isFavorited ? Colors.amber : null,
+                                color: isFavorited ? Colors.red : null,
                               ),
                               onPressed: () => _toggleFavorite(stock),
 
