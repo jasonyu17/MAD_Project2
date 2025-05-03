@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:project2/utils/debouncer.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:project2/services/favorites_service.dart';
+import '../utils/debouncer.dart';
 
 class SearchPage extends StatefulWidget {
   @override
@@ -13,7 +15,21 @@ class _SearchPageState extends State<SearchPage> {
   final Debouncer _debouncer = Debouncer(milliseconds: 400);
 
   List<Map<String, dynamic>> _results = [];
+  Set<String> _favoritedSymbols = {};
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final symbols = await FavoritesService.getFavorites();
+    setState(() {
+      _favoritedSymbols = symbols;
+    });
+  }
 
   Future<void> _searchStocks(String query) async {
     final trimmed = query.trim();
@@ -26,7 +42,6 @@ class _SearchPageState extends State<SearchPage> {
     );
 
     final response = await http.get(url);
-
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final results = List<Map<String, dynamic>>.from(data['result']);
@@ -41,6 +56,19 @@ class _SearchPageState extends State<SearchPage> {
       });
     }
   }
+
+  Future<void> _toggleFavorite(Map<String, dynamic> stock) async {
+  await FavoritesService.toggleFavorite(stock, _favoritedSymbols);
+  setState(() {
+    final symbol = stock['symbol'];
+    if (_favoritedSymbols.contains(symbol)) {
+      _favoritedSymbols.remove(symbol);
+    } else {
+      _favoritedSymbols.add(symbol);
+    }
+  });
+}
+
 
   @override
   void dispose() {
@@ -58,13 +86,11 @@ class _SearchPageState extends State<SearchPage> {
           child: TextField(
             controller: _controller,
             decoration: InputDecoration(
-              hintText: "Search stock",
+              hintText: "Search stock (e.g. Apple, AAPL)",
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
-            onChanged: (text) {
-              _debouncer.run(() => _searchStocks(text));
-            },
+            onChanged: (text) => _debouncer.run(() => _searchStocks(text)),
           ),
         ),
         _isLoading
@@ -76,10 +102,19 @@ class _SearchPageState extends State<SearchPage> {
                         itemCount: _results.length,
                         itemBuilder: (context, index) {
                           final stock = _results[index];
+                          final isFavorited = _favoritedSymbols.contains(stock['symbol']);
+
                           return ListTile(
                             title: Text(stock['description']),
                             subtitle: Text(stock['symbol']),
-                            trailing: Text(stock['type']),
+                            trailing: IconButton(
+                              icon: Icon(
+                                isFavorited ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorited ? Colors.amber : null,
+                              ),
+                              onPressed: () => _toggleFavorite(stock),
+
+                            ),
                           );
                         },
                       ),
