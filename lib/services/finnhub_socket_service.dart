@@ -25,27 +25,7 @@ _channel.sink.add(subMsg);
     }));
     
   }
-  
-  bool useMockData = true; 
-
-Stream<dynamic> get stream {
-  if (useMockData) {
-    return Stream.periodic(
-      const Duration(seconds: 1),
-      (i) => jsonEncode({
-        "data": [
-          {
-            "p": 150.0 + i,
-            "v": 100 + i,
-            "t": DateTime.now().millisecondsSinceEpoch
-          }
-        ]
-      }),
-    );
-  } else {
-    return _channel.stream.asBroadcastStream();
-  }
-}
+  Stream<dynamic> get stream => _channel.stream;
 
   
   void dispose() {

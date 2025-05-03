@@ -45,15 +45,16 @@ class _StockTrackingState extends State<StockTracking> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text('Stock Tracking App')),
       body: _pages[selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-  type: BottomNavigationBarType.fixed,
-  backgroundColor: Colors.white, // ensure contrast
-  selectedItemColor: Colors.blue, // visible selected icon
-  unselectedItemColor: Colors.black54, // visible unselected icon
-  currentIndex: selectedIndex,
-  onTap: _onItemTapped,
-  items: const [
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.white, 
+      selectedItemColor: Colors.blue, 
+      unselectedItemColor: Colors.black54, 
+      currentIndex: selectedIndex,
+      onTap: _onItemTapped,
+      items: const [
     BottomNavigationBarItem(
       icon: Icon(Icons.home),
       label: "Home",
